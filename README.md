@@ -1,6 +1,6 @@
 ## Hi there 👋 It's me Ponmudi Devaraj
 
-Software Develoepr - Flutter (Hybrid Mobile Apps) @ Rax Tech International
+Software Developer - Flutter (Hybrid Mobile Apps) @ Rax Tech International
 <img align="right" width="370" height="290" src="https://i.pinimg.com/originals/47/f0/34/47f0342cec72b800463bf003eac1257e.gif">                                             
 - 🌱 I’m currently learning Python SDE
 - 👯 I’m available for application (Both Android and IOS) and website development.
