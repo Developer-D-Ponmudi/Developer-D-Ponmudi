@@ -1,0 +1,52 @@
+name: Deploy Flutter Web to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]  # change if your default branch is 'master'
+
+permissions:
+  contents: write
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install deps
+        run: flutter pub get
+
+      - name: Build web (handles user vs project repo)
+        shell: bash
+        run: |
+          REPO_FULL="$GITHUB_REPOSITORY"
+          OWNER="$GITHUB_REPOSITORY_OWNER"
+          REPO_NAME=$(echo "$REPO_FULL" | cut -d'/' -f2)
+
+          if [[ "${REPO_NAME,,}" == "${OWNER,,}.github.io" ]]; then
+            # User/Org site → root
+            flutter build web --release --base-href / --pwa-strategy=none
+          else
+            # Project site → subpath
+            flutter build web --release --base-href "/$REPO_NAME/" --pwa-strategy=none
+          fi
+
+          # SPA fallback so go_router deep links work
+          cp build/web/index.html build/web/404.html
+
+          # Disable Jekyll ignoring files that start with underscores
+          touch build/web/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+          # If you add a custom domain later, uncomment and set:
+          # cname: portfolio.ponmudi.dev
