@@ -1,0 +1,13 @@
+{
+  "name": "Ponmudi D",
+  "title": "Flutter Developer",
+  "experience": 3,
+  "location": "India",
+  "about": "Flutter developer with 3 years of experience building performant, beautiful mobile and web apps. Passionate about clean architecture, animations, and delightful UX.",
+  "avatar": "assets/images/profilePic.png",
+  "links": {
+    "github": "https://github.com/your-github",
+    "linkedin": "https://linkedin.com/in/your-linkedin",
+    "email": "mailto:ponmudi@example.com"
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {"name": "Flutter", "level": 90},
+  {"name": "Dart", "level": 88},
+  {"name": "Riverpod", "level": 80},
+  {"name": "GoRouter", "level": 82},
+  {"name": "REST APIs", "level": 84},
+  {"name": "Firebase", "level": 78},
+  {"name": "Animations", "level": 86},
+  {"name": "CI/CD", "level": 65}
+]
