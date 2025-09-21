@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Smart Config App",
+    "desc": "Wi‑Fi provisioning and device discovery with polished UX.",
+    "tags": ["Flutter", "ESP", "Network"],
+    "image": "assets/images/sc.png",
+    "link": "https://github.com/Developer-D-Ponmudi/SnapConnect"
+  },
+  {
+    "name": "Water Softner",
+    "desc": "The Water Softener Monitoring App is a multi-role system that enables remote monitoring and control of water softener devices, tracking parameters like hardness, salt levels, and maintenance alerts in real time. Supports Admin, Manager, Engineer, and Customer roles, using HTTP, MQTT, and SignalR for reliable, real-time updates.",
+    "tags": ["Flutter & Dart", "HTTP", "MQTT", "SignalR", "Multi-role"],
+    "image":"assets/images/waterSoftner.png",
+    "link": "https://apps.apple.com/in/app/rax-softener/id6742730488"
+  },
+  {
+    "name": "FIOT Digital Master",
+    "desc": "Enterprise IoT platform frontend with real-time telemetry, charts, and role-based access.",
+    "tags": ["Flutter Web", "Riverpod", "SignalR"],
+    "image": "assets/images/fiot.png",
+    "link": "https://example.com/fiot"
+  }
+]

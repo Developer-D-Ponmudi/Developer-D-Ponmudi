@@ -1,0 +1,26 @@
+[
+  {
+    "company": "Raxtech International",
+    "role": "Flutter Developer",
+    "from": "2022-08",
+    "to": "Present",
+    "summary": "Built FIOT Platform modules across mobile and web. Implemented complex UI, dashboards, WebSockets/SignalR, and Riverpod state management.",
+    "highlights": [
+      "Implemented animated dashboards with real-time device status",
+      "Optimized list virtualization for >50k telemetry rows",
+      "Modularized app with feature-first architecture"
+    ]
+  },
+  {
+    "company": "Freelance",
+    "role": "Flutter Engineer",
+    "from": "2021-09",
+    "to": "2022-08",
+    "summary": "Delivered cross-platform apps for small businesses.",
+    "highlights": [
+      "Built e-commerce MVP with Firebase Auth & Firestore",
+      "Integrated Razorpay and analytics",
+      "Achieved 60 FPS animation-heavy UI"
+    ]
+  }
+]
