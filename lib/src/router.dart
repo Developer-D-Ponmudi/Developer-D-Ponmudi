@@ -1,15 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:lottie/lottie.dart';
+
+import '../widgets/drawer.dart';
+import '../widgets/nav_bar.dart';
 import 'package:my_portfolio/src/pages/dashboard.dart';
 import 'package:my_portfolio/src/pages/experience.dart';
 import 'package:my_portfolio/src/pages/projects.dart';
 import 'package:my_portfolio/src/pages/skills.dart';
-
-import '../widgets/nav_bar.dart';
-
-
 
 GoRouter createRouter() {
   return GoRouter(
@@ -23,20 +21,46 @@ GoRouter createRouter() {
           GoRoute(path: '/experience', name: 'experience', builder: (_, __) => const ExperiencePage()),
           GoRoute(path: '/projects', name: 'projects', builder: (_, __) => const ProjectsPage()),
         ],
-      )
+      ),
     ],
   );
 }
 
-class NavShell extends StatelessWidget {
+class NavShell extends StatefulWidget {
   const NavShell({super.key, required this.child});
   final Widget child;
 
+  // Tweak this if you want tablet to behave like “desktop”
+  static const double breakpoint = 900.0;
+
+  @override
+  State<NavShell> createState() => _NavShellState();
+}
+
+class _NavShellState extends State<NavShell> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  void _openDrawer() => _scaffoldKey.currentState?.openDrawer();
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final isDesktop = width >= NavShell.breakpoint;
+
     return Scaffold(
-      // We’re drawing everything ourselves on a Stack.
-      extendBodyBehindAppBar: true,
+      key: _scaffoldKey,
+      // IMPORTANT: Don’t draw body behind the AppBar unless your pages add top padding.
+      extendBodyBehindAppBar: false,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(64), // set the height you want
+        child: Material( // keeps elevation/ink behavior sane; can be Container too
+          color: Colors.transparent, // or your nav bg color
+          child: isDesktop ? const PortfolioNavBar() : null,
+        ),
+      ),
+      // Mobile: show Drawer. Desktop: no drawer.
+      drawer: isDesktop ? null : const PortfolioDrawer(),
+      drawerEnableOpenDragGesture: !isDesktop,
       body: Stack(
         children: [
           // Background
@@ -56,20 +80,27 @@ class NavShell extends StatelessWidget {
           ),
 
           // Page content
-          Positioned.fill(child: child),
+          widget.child,
 
-          // Floating, transparent “app bar” (just the nav bar)
-          Positioned(
-            top: 8,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              bottom: false,
-              child: Center(
-                child: const PortfolioNavBar(),
+          // Mobile-only floating menu button (to open the Drawer)
+          if (!isDesktop)
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Material(
+                    color: Colors.black.withOpacity(0.25),
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(Icons.menu_rounded, color: Colors.white),
+                      tooltip: 'Menu',
+                      onPressed: _openDrawer,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
