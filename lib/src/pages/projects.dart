@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,30 +14,22 @@ class ProjectsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final projectsAsync = ref.watch(projectsProvider);
 
-    // Layout paddings to match the rest of your app
+    // Match app paddings
     const horizontalPad = 24.0;
     const topPad = 100.0; // room for floating navbar
     const bottomPad = 48.0;
-    const spacing = 16.0;
+    const gap = 16.0;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final screen = MediaQuery.sizeOf(context);
-        final availW = constraints.maxWidth - horizontalPad * 2;
-        final availH = screen.height;
+        final w = constraints.maxWidth;
 
-        // Header height budget (title + small gap)
-        const headerH = 56.0;
-
-        // Grid area height
-        final gridH = (availH - headerH).clamp(200.0, double.infinity);
-
-        // For a 2x2 grid, compute card size so everything fits without scroll.
-        const cols = 2;
-        const rows = 2;
-        final cardW = (availW - (cols - 1) * spacing) / cols;
-        final cardH = (gridH - (rows - 1) * spacing) / rows;
-        final childAspectRatio = (cardW / cardH).clamp(0.8, 2.2);
+        // Simple responsive breakpoints
+        final isDesktop = w >= 1200;
+        final isTablet = w >= 800 && w < 1200;
+        final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+        // Slightly wider tiles on desktop so text breathes
+        final childAspectRatio = isDesktop ? 0.9: (isTablet ? 0.9 : 0.8);
 
         return Padding(
           padding: const EdgeInsets.only(
@@ -50,48 +43,67 @@ class ProjectsPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Title
-
-            
-                // Fixed-height grid → no scroll, no overflow
-                SizedBox(
-                  height: gridH,
-                  child: projectsAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (_, __) => const Center(child: Text('Failed to load projects')),
-                    data: (list) {
-                      // Inject "Water Softner" and cap to 4 items (2x2)
-                      final injected = [
-                        Project(
-                          'Water Softner',
-                          'The Water Softener Monitoring App is a multi-role system that enables remote monitoring and control of water softener devices, tracking parameters like hardness, salt levels, and maintenance alerts in real time.',
-                          ['Flutter & Dart', 'HTTP', 'MQTT', 'SignalR', 'Multi-role'],
-                          'https://picsum.photos/seed/watersoftner/1200/600',
-                          'https://example.com/water-softener',
-                        ),
-                        ...list,
-                      ];
-                      final items = injected.take(4).toList();
-            
-                      if (items.isEmpty) {
-                        return const Center(child: Text('No projects to show yet.'));
-                      }
-            
-                      return GridView.builder(
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: items.length,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: cols,
-                          mainAxisSpacing: spacing,
-                          crossAxisSpacing: spacing,
-                          childAspectRatio: childAspectRatio,
-                        ),
-                        itemBuilder: (context, i) => _ProjectCard(item: items[i])
-                            .animate()
-                            .fadeIn(duration: 300.ms, delay: (i * 70).ms)
-                            .moveY(begin: 12, end: 0),
-                      );
-                    },
+                Text(
+                  'Projects',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: isDesktop ? 36 : (isTablet ? 30 : 26),
+                    fontWeight: FontWeight.w800,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Selected work & experiments',
+                  style: GoogleFonts.manrope(
+                    fontSize: isDesktop ? 16 : 14,
+                    color: Colors.white.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Grid grows with content; page scrolls naturally
+                projectsAsync.when(
+                  loading: () => const Center(child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: CircularProgressIndicator(),
+                  )),
+                  error: (_, __) => const Center(child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 40),
+                    child: Text('Failed to load projects'),
+                  )),
+                  data: (list) {
+                    // Inject “Water Softner” + cap items for visual cleanliness
+                    final injected = [
+
+                      ...list,
+                    ];
+                    final items = injected.take(isDesktop ? 6 : (isTablet ? 4 : 4)).toList();
+
+                    if (items.isEmpty) {
+                      return const Center(child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 40),
+                        child: Text('No projects to show yet.'),
+                      ));
+                    }
+
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: gap,
+                        crossAxisSpacing: gap,
+                        childAspectRatio: childAspectRatio,
+                      ),
+                      itemBuilder: (context, i) => _ProjectCard(item: items[i])
+                      // If you prefer scroll-safe animations:
+                      // .animate(adapter: const ScrollAdapter())
+                          .animate()
+                          .fadeIn(duration: 300.ms, delay: (i * 90).ms)
+                          .moveY(begin: 12, end: 0, duration: 320.ms),
+                    );
+                  },
                 ),
               ],
             ),
@@ -117,12 +129,16 @@ class _ProjectCardState extends State<_ProjectCard> {
 
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final isDesktop = w >= 1200;
+    final isTablet = w >= 800 && w < 1200;
+
     final titleStyle = GoogleFonts.spaceGrotesk(
-      fontSize: 20, // smaller for a tighter card
+      fontSize: isDesktop ? 22 : (isTablet ? 20 : 18),
       fontWeight: FontWeight.w800,
     );
     final bodyStyle = GoogleFonts.inter(
-      fontSize: 13.2,
+      fontSize: isDesktop ? 13.5 : 13.0,
       height: 1.45,
       color: Colors.white.withOpacity(0.95),
     );
@@ -135,7 +151,7 @@ class _ProjectCardState extends State<_ProjectCard> {
       child: AnimatedContainer(
         duration: 180.ms,
         curve: Curves.easeOutCubic,
-        transform: Matrix4.identity()..translate(0.0, _hover ? -4.0 : 0.0),
+        transform: Matrix4.identity()..translate(0.0, _hover && (kIsWeb || isDesktop) ? -4.0 : 0.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
@@ -148,13 +164,13 @@ class _ProjectCardState extends State<_ProjectCard> {
           ),
           border: Border.all(color: Colors.white.withOpacity(0.08)),
           boxShadow: [
-            if (_hover)
+            if (_hover && (kIsWeb || isDesktop))
               BoxShadow(
                 color: Colors.black.withOpacity(0.35),
                 blurRadius: 22,
                 offset: const Offset(0, 14),
               ),
-            if (_hover)
+            if (_hover && (kIsWeb || isDesktop))
               BoxShadow(
                 color: const Color(0xFF4BE1EC).withOpacity(0.10),
                 blurRadius: 20,
@@ -164,132 +180,131 @@ class _ProjectCardState extends State<_ProjectCard> {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(
-          builder: (context, box) {
-            // Make the image shorter so details always fit in the same tile.
-            final imgH = box.maxHeight * 0.42; // ~42% image, ~58% details
-
-            // limit tags so the row stays compact
-            final tags = widget.item.tags;
-            const maxVisibleTags = 3;
-            final moreCount = (tags.length - maxVisibleTags);
-            final tagChips = <Widget>[
-              for (final t in tags.take(maxVisibleTags)) _TagChip(text: t),
-              if (moreCount > 0) _TagChip(text: '+$moreCount'),
-            ];
-
-            return Column(
-              children: [
-                // Image header (fixed height instead of 16:9 so it’s shorter)
-                SizedBox(
-                  height: imgH,
-                  width: double.infinity,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Image.network(
-                        widget.item.image,
-                        fit: BoxFit.cover,
-                        loadingBuilder: (context, child, prog) =>
-                        prog == null ? child : const Center(child: CircularProgressIndicator()),
-                        errorBuilder: (_, __, ___) => Container(color: Colors.black26),
-                      ),
-                      // top gloss
-                      IgnorePointer(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [Colors.white.withOpacity(0.08), Colors.transparent],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+        child: Column(
+          children: [
+            // Image header with safe, fixed aspect ratio
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(
+                    widget.item.image,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, prog) =>
+                    prog == null ? child : const Center(child: CircularProgressIndicator()),
+                    errorBuilder: (_, __, ___) => Container(color: Colors.black26),
                   ),
-                ),
-
-                // Body (compact)
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title (gradient on hover)
-                        _GradientText(
-                          widget.item.name,
-                          style: titleStyle,
-                          gradient: LinearGradient(
-                            colors: _hover
-                                ? [const Color(0xFF4BE1EC), const Color(0xFFB388FF)]
-                                : [Colors.white, Colors.white],
-                          ),
+                  // subtle gloss
+                  IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.white.withOpacity(0.08), Colors.transparent],
                         ),
-                        const SizedBox(height: 6),
-
-                        // Description (tightened lines)
-                        if (isWaterSoftner) ...[
-                          Text(
-                            '• Monitor & control water softeners remotely — hardness, salt level, maintenance alerts.',
-                            style: bodyStyle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '• Roles: Admin, Manager, Engineer, Customer.',
-                            style: bodyStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '• Tech: HTTP, MQTT, SignalR for real-time updates.',
-                            style: bodyStyle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ] else
-                          Text(
-                            widget.item.desc,
-                            style: bodyStyle,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-
-                        const Spacer(),
-
-                        // Tags + Link (compact)
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: tagChips,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _LinkButton(url: widget.item.link),
-                          ],
-                        ),
-                      ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
+
+            // Body
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title with gradient on hover
+                    _GradientText(
+                      widget.item.name,
+                      style: titleStyle,
+                      gradient: LinearGradient(
+                        colors: _hover && (kIsWeb || isDesktop)
+                            ? [const Color(0xFF4BE1EC), const Color(0xFFB388FF)]
+                            : [Colors.white, Colors.white],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Description — tight, safe wrapping
+                    if (isWaterSoftner) ...[
+                      Text(
+                        '• Monitor & control water softeners remotely — hardness, salt level, maintenance alerts.',
+                        style: bodyStyle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '• Roles: Admin, Manager, Engineer, Customer.',
+                        style: bodyStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '• Tech: HTTP, MQTT, SignalR for real-time updates.',
+                        style: bodyStyle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ] else
+                      Text(
+                        widget.item.desc,
+                        style: bodyStyle,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                    const Spacer(),
+
+                    // Tags + Link
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _TagsWrap(tags: widget.item.tags, maxVisible: 3),
+                        ),
+                        const SizedBox(width: 8),
+                        _LinkButton(url: widget.item.link),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-
 /* -------------------------------- Sub-widgets ------------------------------- */
+
+class _TagsWrap extends StatelessWidget {
+  const _TagsWrap({required this.tags, this.maxVisible = 3});
+  final List<String> tags;
+  final int maxVisible;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = tags.take(maxVisible).toList();
+    final more = tags.length - visible.length;
+
+    return Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        for (final t in visible) _TagChip(text: t),
+        if (more > 0) _TagChip(text: '+$more'),
+      ],
+    );
+  }
+}
 
 class _TagChip extends StatelessWidget {
   const _TagChip({required this.text});
@@ -306,6 +321,8 @@ class _TagChip extends StatelessWidget {
       ),
       child: Text(
         text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: GoogleFonts.inter(
           fontSize: 12.5,
           fontWeight: FontWeight.w700,
@@ -333,9 +350,12 @@ class _LinkButton extends StatelessWidget {
       icon: const Icon(Icons.open_in_new_rounded, size: 18),
       label: const Text('View'),
       style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        minimumSize: const Size(80, 40),
         foregroundColor: Colors.white,
         side: BorderSide(color: Colors.white.withOpacity(0.25)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: GoogleFonts.manrope(fontWeight: FontWeight.w800, fontSize: 12.5),
       ),
     );
   }
@@ -353,7 +373,13 @@ class _GradientText extends StatelessWidget {
     return ShaderMask(
       blendMode: BlendMode.srcIn,
       shaderCallback: (r) => gradient.createShader(r),
-      child: Text(text, style: style),
+      child: Text(
+        text,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        softWrap: true,
+      ),
     );
   }
 }

@@ -9,50 +9,67 @@ class SkillsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final size = MediaQuery.sizeOf(context);
-    final w = size.width;
-    final h = size.height;
+    const horizontalPad = 24.0;
+    const topPad = 100.0;   // room for your floating navbar
+    const bottomPad = 48.0;
+    const gap = 16.0;
 
-    // Layout knobs
-    final horizontalPad = 24.0;
-    final verticalPadTop = 100.0; // leave room for your floating navbar
-    final verticalPadBottom = 48.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        // Simple breakpoints
+        final isDesktop = w >= 1280;
+        final isTablet = w >= 940 && w < 1280;
+        final crossAxisCount = isDesktop ? 3 : (isTablet ? 2 : 1);
+        final childAspectRatio = isDesktop ? 1.25 : (isTablet ? 1.15 : 0.95);
 
-    // Decide columns for desktop/tablet. For phones this will still try to fit,
-    // but the design is targeted at web/desktop widths.
-    final cols = w >= 1280 ? 3 : (w >= 940 ? 2 : 2);
-    final itemCount = _categories.length;
-    final rows = (itemCount / cols).ceil();
+        return Padding(
+          padding: const EdgeInsets.only(
+              top: topPad, left: horizontalPad, right: horizontalPad, bottom: bottomPad),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Title
+                Text(
+                  'Skills',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: isDesktop ? 36 : (isTablet ? 30 : 26),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Tools, languages, and platforms I use',
+                  style: GoogleFonts.manrope(
+                    fontSize: isDesktop ? 16 : 14,
+                    color: Colors.white.withOpacity(0.7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 20),
 
-    // Compute a childAspectRatio so grid fills the viewport height w/o scroll.
-    final gridW = w - horizontalPad * 2;
-    final gridH = h - verticalPadTop - verticalPadBottom;
-    final spacing = 16.0;
-    final cardW = (gridW - (cols - 1) * spacing) / cols;
-    final cardH = (gridH - (rows - 1) * spacing) / rows;
-    final aspect = (cardW / cardH).clamp(1.0, 2.2); // keep sane bounds
-
-    return Padding(
-      padding: EdgeInsets.only(
-        top: verticalPadTop,
-        left: horizontalPad,
-        right: horizontalPad,
-        bottom: verticalPadBottom,
-      ),
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: _categories.length,
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: cols,
-          mainAxisSpacing: spacing,
-          crossAxisSpacing: spacing,
-          childAspectRatio: aspect,
-        ),
-        itemBuilder: (context, i) => _SkillCategoryCard(cat: _categories[i])
-            .animate()
-            .fadeIn(duration: 280.ms, delay: (i * 70).ms)
-            .moveY(begin: 12, end: 0, duration: 340.ms),
-      ),
+                // Responsive grid that grows with content
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _categories.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    mainAxisSpacing: gap,
+                    crossAxisSpacing: gap,
+                    childAspectRatio: childAspectRatio,
+                  ),
+                  itemBuilder: (context, i) => _SkillCategoryCard(cat: _categories[i])
+                      .animate()
+                      .fadeIn(duration: 280.ms, delay: (i * 70).ms)
+                      .moveY(begin: 12, end: 0, duration: 340.ms),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -67,7 +84,7 @@ class _Category {
 
 class _Tag {
   final String label;
-  final String? badge; // optional small badge like "Beginner" / "3 projects"
+  final String? badge; // optional badge like "Beginner" / "3 projects"
   const _Tag(this.label, {this.badge});
 }
 
@@ -122,8 +139,12 @@ class _SkillCategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final w = MediaQuery.sizeOf(context).width;
+    final isDesktop = w >= 1280;
+    final isTablet = w >= 940 && w < 1280;
+
     final titleStyle = GoogleFonts.plusJakartaSans(
-      fontSize: 22,
+      fontSize: isDesktop ? 22 : (isTablet ? 20 : 18),
       fontWeight: FontWeight.w800,
       letterSpacing: -0.2,
     );
@@ -168,33 +189,30 @@ class _SkillCategoryCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+
+          // Flexible content; no intrinsics, no nested scroll issues
           Expanded(
             child: LayoutBuilder(
               builder: (context, c) {
-                // Responsive chip sizing to keep everything in-bounds
                 final maxW = c.maxWidth;
-                final isTight = maxW < 320;
-                final chipPadH = isTight ? 8.0 : 10.0;
-                final chipPadV = isTight ? 7.0 : 8.0;
-                final fontSize = isTight ? 12.5 : 14.0;
+                final tight = maxW < 320;
+                final chipHP = tight ? 8.0 : 10.0;
+                final chipVP = tight ? 6.0 : 8.0;
+                final fontSize = tight ? 12.5 : 14.0;
 
-                return SingleChildScrollView(
-                  // still no page scroll; this is just internal safety on tiny widths
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-                    children: [
-                      for (final t in cat.tags)
-                        _SkillChip(
-                          label: t.label,
-                          badge: t.badge,
-                          fontSize: fontSize,
-                          hp: chipPadH,
-                          vp: chipPadV,
-                        ),
-                    ],
-                  ),
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final t in cat.tags)
+                      _SkillChip(
+                        label: t.label,
+                        badge: t.badge,
+                        fontSize: fontSize,
+                        hp: chipHP,
+                        vp: chipVP,
+                      ),
+                  ],
                 );
               },
             ),
@@ -254,7 +272,7 @@ class _SkillChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: labelStyle),
+          Text(label, style: labelStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
           if (badge != null) ...[
             const SizedBox(width: 8),
             Container(
@@ -265,7 +283,7 @@ class _SkillChip extends StatelessWidget {
                   colors: [Color(0xFF4BE1EC), Color(0xFFB388FF)],
                 ),
               ),
-              child: Text(badge!, style: badgeStyle),
+              child: Text(badge!, style: badgeStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
           ],
         ],
@@ -287,7 +305,13 @@ class _GradientText extends StatelessWidget {
     return ShaderMask(
       blendMode: BlendMode.srcIn,
       shaderCallback: (r) => gradient.createShader(r),
-      child: Text(text, style: style),
+      child: Text(
+        text,
+        style: style,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        softWrap: true,
+      ),
     );
   }
 }
